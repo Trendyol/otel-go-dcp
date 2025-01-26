@@ -1,4 +1,4 @@
-// Package go_dcp_tracing_otel provides OpenTelemetry-based tracing implementations for the go-dcp package.
+// Package otel_go_dcp provides OpenTelemetry-based tracing implementations for the go-dcp package.
 // This allows users to leverage OpenTelemetry for distributed tracing in their go-dcp applications.
 package otel_go_dcp
 

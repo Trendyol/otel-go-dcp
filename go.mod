@@ -2,8 +2,6 @@ module github.com/Trendyol/otel-go-dcp
 
 go 1.20
 
-replace github.com/Trendyol/go-dcp => ../go-dcp
-
 replace go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.20.0
 
 replace go.opentelemetry.io/otel/sdk => go.opentelemetry.io/otel/sdk v1.20.0
@@ -18,7 +16,7 @@ retract (
 )
 
 require (
-	github.com/Trendyol/go-dcp v1.2.0-rc.4
+	github.com/Trendyol/go-dcp v1.2.2
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
 	go.opentelemetry.io/otel/sdk v1.20.0

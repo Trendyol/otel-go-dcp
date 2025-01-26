@@ -1,4 +1,4 @@
-package go_dcp_tracing_otel
+package otel_go_dcp
 
 import (
 	"encoding/json"
