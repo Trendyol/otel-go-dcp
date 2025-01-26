@@ -1,4 +1,4 @@
-package go_dcp_tracing_otel
+package otelgodcp
 
 import (
 	"encoding/json"
@@ -48,6 +48,7 @@ func (span *OpenTelemetryRequestSpan) Context() tracing.RequestSpanContext {
 	return span.ctx
 }
 
+//nolint:funlen
 func (span *OpenTelemetryRequestSpan) SetAttribute(key string, value interface{}) {
 	switch v := value.(type) {
 	case string:

@@ -1,15 +1,16 @@
-// Package go_dcp_tracing_otel provides OpenTelemetry-based tracing implementations for the go-dcp package.
+// Package otelgodcp provides OpenTelemetry-based tracing implementations for the go-dcp package.
 // This allows users to leverage OpenTelemetry for distributed tracing in their go-dcp applications.
-package otel_go_dcp
+package otelgodcp
 
 import (
+	"os"
+
 	"github.com/Trendyol/go-dcp/tracing"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
-	"os"
 )
 
 // init registers the OpenTelemetry tracer with the go-dcp tracing system.
@@ -51,10 +52,10 @@ func init() {
 
 	otel.SetTracerProvider(tp)
 	requestTracer := NewOpenTelemetryRequestTracer(tp)
-	traceRegisterRerr := tracing.RegisterRequestTracer(requestTracer)
+	traceRegisterErr := tracing.RegisterRequestTracer(requestTracer)
 
-	if traceRegisterRerr != nil {
-		panic(traceRegisterRerr)
+	if traceRegisterErr != nil {
+		panic(traceRegisterErr)
 	}
 }
 
