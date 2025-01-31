@@ -79,7 +79,7 @@ func getConfig() *config.Dcp {
 	}
 }
 
-func setupContainer(c *config.Dcp, ctx context.Context, version string) (testcontainers.Container, error) {
+func setupCBContainer(c *config.Dcp, ctx context.Context, version string) (testcontainers.Container, error) {
 	var entrypoint string
 	if isVersion5xx(version) {
 		entrypoint = "../../../scripts/entrypoint_5.sh"
@@ -136,7 +136,7 @@ func setupContainer(c *config.Dcp, ctx context.Context, version string) (testcon
 	})
 }
 
-func setupJeagerAllInOneContainer(ctx context.Context) func() {
+func setupJaegerAllInOneContainer(ctx context.Context) (testcontainers.Container, error) {
 	req := testcontainers.ContainerRequest{
 		Image:        "jaegertracing/all-in-one:latest",
 		ExposedPorts: []string{"5775/udp", "6831/udp", "6832/udp", "5778/tcp", "16686/tcp", "14268/tcp", "9411/tcp"},
@@ -160,7 +160,7 @@ func setupJeagerAllInOneContainer(ctx context.Context) func() {
 		Started:          true,
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Get the mapped ports
@@ -183,11 +183,7 @@ func setupJeagerAllInOneContainer(ctx context.Context) func() {
 	fmt.Printf("Port 9411/tcp mapped to: %s\n", port9411)
 
 	// Clean up the container when done
-	return func() {
-		if err := jaegerContainer.Terminate(ctx); err != nil {
-			panic(err)
-		}
-	}
+	return jaegerContainer, nil
 }
 
 func insertDataToContainer(c *config.Dcp, t *testing.T, iteration int, chunkSize int, bulkSize int) {
@@ -252,39 +248,24 @@ func insertDataToContainer(c *config.Dcp, t *testing.T, iteration int, chunkSize
 func testTraces(ctx *models.ListenerContext) {
 	// Traces
 	lt1 := ctx.ListenerTracerComponent.InitializeListenerTrace("test1", map[string]interface{}{})
-	time.Sleep(time.Second * 1)
 	lt11 := ctx.ListenerTracerComponent.CreateListenerTrace(lt1, "test1-1", map[string]interface{}{})
-	time.Sleep(time.Second * 1)
 	lt11.Finish()
 	lt12 := ctx.ListenerTracerComponent.CreateListenerTrace(lt1, "test1-2", map[string]interface{}{
 		"test1-2": "This is a test metadata",
 	})
-	time.Sleep(time.Second * 1)
 	lt121 := ctx.ListenerTracerComponent.CreateListenerTrace(lt12, "test1-2-1", map[string]interface{}{})
-	time.Sleep(time.Millisecond * 100)
 	lt121.Finish()
-	time.Sleep(time.Millisecond * 300)
 	lt12.Finish()
 	lt1.Finish()
 }
 
-func testWithTraces(t *testing.T, version string) {
+func testWithTraces(t *testing.T, c *config.Dcp) {
 	chunkSize := 4
 	bulkSize := 1024
 	iteration := 512
 	mockDataSize := iteration * bulkSize * chunkSize
 	totalNotify := 10
 	notifySize := mockDataSize / totalNotify
-
-	c := getConfig()
-	c.ApplyDefaults()
-
-	ctx := context.Background()
-
-	container, err := setupContainer(c, ctx, version)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	var counter atomic.Int32
 	finish := make(chan struct{}, 1)
@@ -321,21 +302,40 @@ func testWithTraces(t *testing.T, version string) {
 
 	dcp.Start()
 
-	err = container.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	logger.Log.Info("mock data stream finished with totalSize=%v", counter.Load())
 }
 
 func TestDcpWithTraces(t *testing.T) {
-	terminateFunc := setupJeagerAllInOneContainer(context.Background())
-	defer terminateFunc()
+	cbVersion := "7.6.3"
+	ctx := context.Background()
 
-	version := "7.6.3"
+	c := getConfig()
+	c.ApplyDefaults()
 
-	t.Run(version, func(t *testing.T) {
-		testWithTraces(t, version)
+	jaegerContainer, jaegerContainerErr := setupJaegerAllInOneContainer(context.Background())
+	if jaegerContainerErr != nil {
+		t.Fatal(jaegerContainerErr)
+	}
+
+	cbContainer, cbContainerErr := setupCBContainer(c, ctx, cbVersion)
+	if cbContainerErr != nil {
+		t.Fatal(cbContainerErr)
+	}
+
+	defer func() {
+		jaegerContainerTerminateErr := jaegerContainer.Terminate(context.Background())
+		cbContainerTerminateErr := cbContainer.Terminate(context.Background())
+
+		if jaegerContainerTerminateErr != nil {
+			t.Fatal(jaegerContainerTerminateErr)
+		}
+
+		if cbContainerTerminateErr != nil {
+			t.Fatal(cbContainerTerminateErr)
+		}
+	}()
+
+	t.Run(cbVersion, func(t *testing.T) {
+		testWithTraces(t, c)
 	})
 }
