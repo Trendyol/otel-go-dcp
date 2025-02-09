@@ -21,6 +21,9 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Start tracing infra
+        run: docker compose -f development/docker-compose.otel-jaeger.yml up -d
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
@@ -31,3 +34,7 @@ jobs:
         env:
           INPUT_PUBLISH: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete tracing infra
+        run: docker compose -f development/docker-compose.otel-jaeger.yml down
+

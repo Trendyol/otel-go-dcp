@@ -6,7 +6,6 @@
 
 - Integrates OpenTelemetry with `go-dcp` for enhanced observability.
 - Automatically registers the OpenTelemetry tracer with the `go-dcp` tracing system.
-- Supports Jaeger exporter for tracing data.
 
 ## Installation
 
@@ -30,29 +29,23 @@ import (
 
 By registering the OpenTelemetry tracer, this package helps integrate OpenTelemetry's powerful tracing capabilities with `go-dcp`, facilitating enhanced observability and monitoring for your distributed applications.
 
+Here is the updated environment variables table with the `Type` field added and the `Required` column removed:
+
 ## Environment Variables
 
 The following environment variables can be set to configure the tracing behavior:
 
-- `GO-DCP_COLLECTOR_SERVICE_NAME`: The service name to be used by the Jaeger exporter. Defaults to `go-dcp` if not set.
-- `OTEL_EXPORTER_JAEGER_ENDPOINT`: The Jaeger collector endpoint. Defaults to `http://localhost:14268/api/traces` if not set.
-- `OTEL_EXPORTER_JAEGER_USER`: The username to be used for authentication with the Jaeger collector.
-- `OTEL_EXPORTER_JAEGER_PASSWORD`: The password to be used for authentication with the Jaeger collector.
-
-Example:
-
-```sh
-export GO-DCP_COLLECTOR_SERVICE_NAME=my-service
-export OTEL_EXPORTER_JAEGER_ENDPOINT=http://localhost:14268/api/traces
-export OTEL_EXPORTER_JAEGER_USER=my-username
-export OTEL_EXPORTER_JAEGER_PASSWORD=my-password
-```
-
-Example:
-
-```sh
-export GO-DCP_COLLECTOR_SERVICE_NAME=my-service
-```
+| Variable Name                     | Description                                      | Type     | Default Value          | Example                          |
+|-----------------------------------|--------------------------------------------------|----------|------------------------|----------------------------------|
+| `OTEL_EXPORTER_OTLP_HEADERS`      | Headers for OTLP exporter                        | `string` |                        | `key1=value1,key2=value2`        |
+| `OTEL_SERVICE_NAME`               | Name of the service                              | `string` | `otel-go-dcp`          | `my-service`                     |
+| `OTEL_SERVICE_NAMESPACE`          | Namespace of the service                         | `string` | `otel-go-dcp`          | `my-namespace`                   |
+| `OTEL_SERVICE_INSTANCE_ID`        | Instance ID of the service                       | `string` | `otel-go-dcp`          | `instance-123`                   |
+| `OTEL_SERVICE_VERSION`            | Version of the service                           | `string` | `N/A`                  | `1.0.0`                          |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`     | Endpoint for OTLP exporter                       | `string` | `http://localhost:4317`| `http://collector:4317`          |
+| `OTEL_EXPORTER_OTLP_COMPRESSION`  | Compression for OTLP exporter                    | `string` | `gzip`                 | `none`                           |
+| `OTEL_TRACES_SAMPLER_ARG`         | Trace sampling probability                       | `float`  | `0.1`                  | `0.5`                            |
+| `OTEL_EXPORTER_OTLP_TIMEOUT`      | Timeout for OTLP exporter                        | `duration`| `10s`                  | `5s`                             |
 
 ## Contributing
 

@@ -22,3 +22,9 @@ test:
 tidy:
 	go mod tidy
 	cd test/integration/basic-otel-tracing && go mod tidy
+
+create-tracing-infra:
+	bash scripts/create_tracing_infra.sh
+
+delete-tracing-infra:
+	bash scripts/delete_tracing_infra.sh

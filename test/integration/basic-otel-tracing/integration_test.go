@@ -25,7 +25,6 @@ import (
 	"github.com/Trendyol/go-dcp/couchbase"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	// You know the drill
 	_ "github.com/Trendyol/otel-go-dcp"
 )
 
@@ -134,56 +133,6 @@ func setupCBContainer(c *config.Dcp, ctx context.Context, version string) (testc
 		ContainerRequest: req,
 		Started:          true,
 	})
-}
-
-func setupJaegerAllInOneContainer(ctx context.Context) (testcontainers.Container, error) {
-	req := testcontainers.ContainerRequest{
-		Image:        "jaegertracing/all-in-one:latest",
-		ExposedPorts: []string{"5775/udp", "6831/udp", "6832/udp", "5778/tcp", "16686/tcp", "14268/tcp", "9411/tcp"},
-		WaitingFor:   wait.ForLog("Starting HTTP server").WithStartupTimeout(30 * time.Second),
-		HostConfigModifier: func(hostConfig *container.HostConfig) {
-			hostConfig.PortBindings = nat.PortMap{
-				"5775/udp":  []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "5775"}},
-				"6831/udp":  []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "6831"}},
-				"6832/udp":  []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "6832"}},
-				"5778/tcp":  []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "5778"}},
-				"16686/tcp": []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "16686"}},
-				"14268/tcp": []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "14268"}},
-				"9411/tcp":  []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "9411"}},
-			}
-		},
-	}
-
-	// Start the container
-	jaegerContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the mapped ports
-	port5775, _ := jaegerContainer.MappedPort(ctx, "5775/udp")
-	port6831, _ := jaegerContainer.MappedPort(ctx, "6831/udp")
-	port6832, _ := jaegerContainer.MappedPort(ctx, "6832/udp")
-	port5778, _ := jaegerContainer.MappedPort(ctx, "5778/tcp")
-	port16686, _ := jaegerContainer.MappedPort(ctx, "16686/tcp")
-	port14268, _ := jaegerContainer.MappedPort(ctx, "14268/tcp")
-	port9411, _ := jaegerContainer.MappedPort(ctx, "9411/tcp")
-
-	// Print the mapped ports
-	fmt.Printf("Jaeger container started!\n")
-	fmt.Printf("Port 5775/udp mapped to: %s\n", port5775)
-	fmt.Printf("Port 6831/udp mapped to: %s\n", port6831)
-	fmt.Printf("Port 6832/udp mapped to: %s\n", port6832)
-	fmt.Printf("Port 5778/tcp mapped to: %s\n", port5778)
-	fmt.Printf("Port 16686/tcp mapped to: %s\n", port16686)
-	fmt.Printf("Port 14268/tcp mapped to: %s\n", port14268)
-	fmt.Printf("Port 9411/tcp mapped to: %s\n", port9411)
-
-	// Clean up the container when done
-	return jaegerContainer, nil
 }
 
 func insertDataToContainer(c *config.Dcp, t *testing.T, iteration int, chunkSize int, bulkSize int) {
@@ -312,24 +261,13 @@ func TestDcpWithTraces(t *testing.T) {
 	c := getConfig()
 	c.ApplyDefaults()
 
-	jaegerContainer, jaegerContainerErr := setupJaegerAllInOneContainer(context.Background())
-	if jaegerContainerErr != nil {
-		t.Fatal(jaegerContainerErr)
-	}
-
 	cbContainer, cbContainerErr := setupCBContainer(c, ctx, cbVersion)
 	if cbContainerErr != nil {
 		t.Fatal(cbContainerErr)
 	}
 
 	defer func() {
-		jaegerContainerTerminateErr := jaegerContainer.Terminate(context.Background())
 		cbContainerTerminateErr := cbContainer.Terminate(context.Background())
-
-		if jaegerContainerTerminateErr != nil {
-			t.Fatal(jaegerContainerTerminateErr)
-		}
-
 		if cbContainerTerminateErr != nil {
 			t.Fatal(cbContainerTerminateErr)
 		}

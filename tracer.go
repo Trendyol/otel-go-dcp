@@ -18,7 +18,7 @@ type OpenTelemetryRequestTracer struct {
 
 func NewOpenTelemetryRequestTracer(provider trace.TracerProvider) *OpenTelemetryRequestTracer {
 	return &OpenTelemetryRequestTracer{
-		wrapped: provider.Tracer("com.trendyol/go-dcp-tracing-otel"),
+		wrapped: provider.Tracer("com.trendyol/otel-go-dcp"),
 	}
 }
 
