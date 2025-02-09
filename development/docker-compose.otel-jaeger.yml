@@ -1,0 +1,28 @@
+version: '2'
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.100.0
+    labels:
+      otel-go-dcp.description: "Integration required for OTEL/opentelemetry hooks."
+    container_name: "otel-go-dcp-otel-collector"
+    command: [--config=/etc/otel-collector-config.yml]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "4317:4317"    # OTLP http receiver
+      # - "28889:8889"    # Prometheus exporter metrics
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: "otel-go-dcp-jaeger"
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+      COLLLECTOR_ZIPKIN_HOST_PORT: 9411
+    ports:
+      # - "36686:16686"
+      - "16686:16686"
+      - "16685:16685"
+      - "34317:4317"
+      - "34318:4318"
+      - "39422:9422"
