@@ -1,3 +1,5 @@
+
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Trendyol/otel-go-dcp/badge)](https://scorecard.dev/viewer/?uri=github.com/Trendyol/otel-go-dcp)
 # otel-go-dcp
 
 `otel-go-dcp` provides OpenTelemetry-based tracing implementations for the `go-dcp` package. This allows users to leverage OpenTelemetry for distributed tracing in their `go-dcp` applications.
