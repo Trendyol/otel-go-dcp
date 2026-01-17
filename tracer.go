@@ -12,13 +12,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const InstrumentationName = "com.trendyol/otel-go-dcp"
+
 type OpenTelemetryRequestTracer struct {
 	wrapped trace.Tracer
 }
 
 func NewOpenTelemetryRequestTracer(provider trace.TracerProvider) *OpenTelemetryRequestTracer {
 	return &OpenTelemetryRequestTracer{
-		wrapped: provider.Tracer("com.trendyol/otel-go-dcp"),
+		wrapped: provider.Tracer(InstrumentationName),
 	}
 }
 
@@ -48,43 +50,14 @@ func (span *OpenTelemetryRequestSpan) Context() tracing.RequestSpanContext {
 	return span.ctx
 }
 
-//nolint:funlen
 func (span *OpenTelemetryRequestSpan) SetAttribute(key string, value interface{}) {
+	if val := attributeFromValue(key, value); val.Valid() {
+		span.wrapped.SetAttributes(val)
+		return
+	}
+
+	// Handle special cases/fallbacks
 	switch v := value.(type) {
-	case string:
-		span.wrapped.SetAttributes(attribute.String(key, v))
-	case *string:
-		span.wrapped.SetAttributes(attribute.String(key, *v))
-	case bool:
-		span.wrapped.SetAttributes(attribute.Bool(key, v))
-	case *bool:
-		span.wrapped.SetAttributes(attribute.Bool(key, *v))
-	case int:
-		span.wrapped.SetAttributes(attribute.Int(key, v))
-	case *int:
-		span.wrapped.SetAttributes(attribute.Int(key, *v))
-	case int64:
-		span.wrapped.SetAttributes(attribute.Int64(key, v))
-	case *int64:
-		span.wrapped.SetAttributes(attribute.Int64(key, *v))
-	case uint32:
-		span.wrapped.SetAttributes(attribute.Int(key, int(v)))
-	case *uint32:
-		span.wrapped.SetAttributes(attribute.Int(key, int(*v)))
-	case float64:
-		span.wrapped.SetAttributes(attribute.Float64(key, v))
-	case *float64:
-		span.wrapped.SetAttributes(attribute.Float64(key, *v))
-	case []string:
-		span.wrapped.SetAttributes(attribute.StringSlice(key, v))
-	case []bool:
-		span.wrapped.SetAttributes(attribute.BoolSlice(key, v))
-	case []int:
-		span.wrapped.SetAttributes(attribute.IntSlice(key, v))
-	case []int64:
-		span.wrapped.SetAttributes(attribute.Int64Slice(key, v))
-	case []float64:
-		span.wrapped.SetAttributes(attribute.Float64Slice(key, v))
 	case fmt.Stringer:
 		span.wrapped.SetAttributes(attribute.String(key, v.String()))
 	case map[string]interface{}, struct{}, interface{}:
@@ -97,6 +70,47 @@ func (span *OpenTelemetryRequestSpan) SetAttribute(key string, value interface{}
 	default:
 		log.Println("Unable to determine value as a type that we can handle")
 	}
+}
+
+//nolint:gocyclo
+func attributeFromValue(key string, value interface{}) attribute.KeyValue {
+	switch v := value.(type) {
+	case string:
+		return attribute.String(key, v)
+	case *string:
+		return attribute.String(key, *v)
+	case bool:
+		return attribute.Bool(key, v)
+	case *bool:
+		return attribute.Bool(key, *v)
+	case int:
+		return attribute.Int(key, v)
+	case *int:
+		return attribute.Int(key, *v)
+	case int64:
+		return attribute.Int64(key, v)
+	case *int64:
+		return attribute.Int64(key, *v)
+	case uint32:
+		return attribute.Int(key, int(v))
+	case *uint32:
+		return attribute.Int(key, int(*v))
+	case float64:
+		return attribute.Float64(key, v)
+	case *float64:
+		return attribute.Float64(key, *v)
+	case []string:
+		return attribute.StringSlice(key, v)
+	case []bool:
+		return attribute.BoolSlice(key, v)
+	case []int:
+		return attribute.IntSlice(key, v)
+	case []int64:
+		return attribute.Int64Slice(key, v)
+	case []float64:
+		return attribute.Float64Slice(key, v)
+	}
+	return attribute.KeyValue{}
 }
 
 func (span *OpenTelemetryRequestSpan) AddEvent(key string, timestamp time.Time) {
