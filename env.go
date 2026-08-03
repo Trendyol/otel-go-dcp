@@ -2,6 +2,7 @@ package otelgodcp
 
 import (
 	"context"
+	"errors"
 	"os"
 	"time"
 
@@ -21,7 +22,7 @@ type Options struct {
 }
 
 func (opts *Options) toResources() (*resource.Resource, error) {
-	return resource.New(context.Background(),
+	res, err := resource.New(context.Background(),
 		resource.WithFromEnv(),
 		resource.WithDetectors(NewServiceAttributesDetector(*opts, os.Hostname)),
 		resource.WithProcessRuntimeName(),
@@ -29,4 +30,10 @@ func (opts *Options) toResources() (*resource.Resource, error) {
 		resource.WithOS(),
 		resource.WithTelemetrySDK(),
 	)
+	// Schema URL / partial resource conflicts are non-fatal; merged resource is still usable.
+	// See: https://pkg.go.dev/go.opentelemetry.io/otel/sdk/resource#New
+	if err != nil && (errors.Is(err, resource.ErrPartialResource) || errors.Is(err, resource.ErrSchemaURLConflict)) {
+		return res, nil
+	}
+	return res, err
 }
